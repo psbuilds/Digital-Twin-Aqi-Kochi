@@ -36,135 +36,7 @@ The Digital Twin AQI Kochi system is a comprehensive air quality monitoring and 
 
 ## 2. Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          PRESENTATION LAYER                                  │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                      Web Dashboard (Flask/Streamlit)                    │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────┐ │ │
-│  │  │ Real-time    │  │ Historical   │  │  Prediction  │  │  Map View  │ │ │
-│  │  │ AQI Display  │  │  Analytics   │  │   Charts     │  │  (Leaflet) │ │ │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └────────────┘ │ │
-│  │                                                                          │ │
-│  │  ┌──────────────────────────────────────────────────────────────────┐  │ │
-│  │  │              REST API Endpoints (/api/*)                         │  │ │
-│  │  └──────────────────────────────────────────────────────────────────┘  │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      ▲
-                                      │ HTTP/JSON
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PROCESSING LAYER                                     │
-│  ┌──────────────────────────┐         ┌──────────────────────────────────┐ │
-│  │   AQI Logic Module       │         │   Machine Learning Module        │ │
-│  │  ┌──────────────────┐    │         │  ┌────────────────────────────┐  │ │
-│  │  │ current_aqi_     │    │         │  │  data_extraction.py        │  │ │
-│  │  │ rules.py         │    │         │  │  - Extract from FIWARE     │  │ │
-│  │  │ - calculate_aqi()│    │         │  │  - Feature engineering     │  │ │
-│  │  │ - sub_index()    │    │         │  │  - Data cleaning           │  │ │
-│  │  └──────────────────┘    │         │  └────────────────────────────┘  │ │
-│  │  ┌──────────────────┐    │         │  ┌────────────────────────────┐  │ │
-│  │  │ status_mapping.py│    │         │  │  train_model.py            │  │ │
-│  │  │ - get_status()   │    │         │  │  - RandomForest/XGBoost    │  │ │
-│  │  │ - health_advice()│    │         │  │  - Hyperparameter tuning   │  │ │
-│  │  └──────────────────┘    │         │  │  - Model evaluation        │  │ │
-│  └──────────────────────────┘         │  └────────────────────────────┘  │ │
-│                                        │  ┌────────────────────────────┐  │ │
-│                                        │  │  predict_future_aqi.py     │  │ │
-│                                        │  │  - Load trained model      │  │ │
-│                                        │  │  - Generate predictions    │  │ │
-│                                        │  │  - Confidence intervals    │  │ │
-│                                        │  └────────────────────────────┘  │ │
-│                                        └──────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      ▲
-                                      │ Query/Update
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    CONTEXT MANAGEMENT LAYER (FIWARE)                         │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                    FIWARE Orion Context Broker                          │ │
-│  │                         (Docker Container)                              │ │
-│  │  ┌──────────────────────────────────────────────────────────────────┐  │ │
-│  │  │  Entity Storage (NGSI-v2 Format)                                 │  │ │
-│  │  │  - AirQualitySensor entities                                     │  │ │
-│  │  │  - Real-time context data                                        │  │ │
-│  │  │  - Historical data (with persistence)                            │  │ │
-│  │  └──────────────────────────────────────────────────────────────────┘  │ │
-│  │                                                                          │ │
-│  │  REST API: http://localhost:1026/v2/entities                            │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  ┌──────────────────────────┐         ┌──────────────────────────────────┐ │
-│  │   orion_client.py        │         │   context_ingestor.py            │ │
-│  │  - create_entity()       │         │  - ingest_sensor_data()          │ │
-│  │  - update_entity()       │         │  - batch_ingest()                │ │
-│  │  - query_entities()      │         │  - validate_data()               │ │
-│  │  - subscribe()           │         │  - transform_to_ngsi()           │ │
-│  └──────────────────────────┘         └──────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      ▲
-                                      │ Sensor Data (JSON)
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           SENSOR LAYER                                       │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │              aqi_sensor_simulator.py (SensorSimulator)                  │ │
-│  │  ┌──────────────────────────────────────────────────────────────────┐  │ │
-│  │  │  Simulated Sensors (Multiple Locations)                          │  │ │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │  │ │
-│  │  │  │ Ernakulam   │  │ Fort Kochi  │  │  Location N │              │  │ │
-│  │  │  │ Sensor      │  │ Sensor      │  │  Sensor     │              │  │ │
-│  │  │  └─────────────┘  └─────────────┘  └─────────────┘              │  │ │
-│  │  │                                                                   │  │ │
-│  │  │  Pollutant Measurements:                                         │  │ │
-│  │  │  • PM2.5 (µg/m³)    • PM10 (µg/m³)    • NO2 (ppb)               │  │ │
-│  │  │  • SO2 (ppb)        • CO (ppm)         • O3 (ppb)                │  │ │
-│  │  │  • Temperature (°C) • Humidity (%)                               │  │ │
-│  │  │                                                                   │  │ │
-│  │  │  Features:                                                        │  │ │
-│  │  │  - Realistic diurnal patterns (traffic peaks)                    │  │ │
-│  │  │  - Weather correlations                                          │  │ │
-│  │  │  - Random noise injection                                        │  │ │
-│  │  │  - Configurable update intervals (default: 60s)                  │  │ │
-│  │  └──────────────────────────────────────────────────────────────────┘  │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         CONFIGURATION LAYER                                  │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                        config/settings.yaml                             │ │
-│  │  - FIWARE connection settings                                           │ │
-│  │  - Sensor configurations (locations, pollutants)                        │ │
-│  │  - ML model parameters                                                  │ │
-│  │  - Dashboard settings                                                   │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                    fiware/entity_models.json                            │ │
-│  │  - NGSI-v2 entity schemas                                               │ │
-│  │  - Data model definitions                                               │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           DATA STORAGE LAYER                                 │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  data/evaluation_results.csv                                            │ │
-│  │  - Model performance metrics (MAE, RMSE, R², MAPE)                      │ │
-│  │  - Training/testing results                                             │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  Trained ML Models (Serialized)                                         │ │
-│  │  - models/aqi_predictor.pkl (joblib format)                             │ │
-│  │  - Feature scalers and transformers                                     │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+
 
 ---
 
@@ -209,19 +81,7 @@ The Digital Twin AQI Kochi system is a comprehensive air quality monitoring and 
 - Multi-tenancy (fiware-service headers)
 
 **Data Model**: NGSI-v2 compliant entities
-```json
-{
-  "id": "AQI_Ernakulam_001",
-  "type": "AirQualitySensor",
-  "location": {
-    "type": "geo:json",
-    "value": {"type": "Point", "coordinates": [76.2999, 9.9816]}
-  },
-  "PM2_5": {"type": "Number", "value": 45.5},
-  "aqi": {"type": "Number", "value": 125},
-  "status": {"type": "Text", "value": "Unhealthy for Sensitive Groups"}
-}
-```
+
 
 #### 3.2.2 Orion Client (`orion_client.py`)
 
@@ -266,11 +126,7 @@ The Digital Twin AQI Kochi system is a comprehensive air quality monitoring and 
    - Color coding for visualization
 
 **AQI Calculation Formula**:
-```
-I = [(I_high - I_low) / (C_high - C_low)] × (C - C_low) + I_low
 
-Overall AQI = max(sub_index_PM2.5, sub_index_PM10, ..., sub_index_O3)
-```
 
 **Design Pattern**: Strategy Pattern (different calculation strategies)
 
@@ -298,11 +154,7 @@ Overall AQI = max(sub_index_PM2.5, sub_index_PM10, ..., sub_index_O3)
    - Real-time prediction API
 
 **ML Pipeline**:
-```
-Historical Data → Feature Engineering → Model Training → Evaluation → Deployment
-                                                              ↓
-                                                    Current Data → Predictions
-```
+
 
 **Design Pattern**: Pipeline Pattern
 
@@ -355,19 +207,7 @@ Historical Data → Feature Engineering → Model Training → Evaluation → De
 
 ### 4.2 Python Dependencies
 
-```
-flask>=2.0.0 or streamlit>=1.20.0
-requests>=2.28.0
-pandas>=1.5.0
-numpy>=1.23.0
-scikit-learn>=1.2.0
-xgboost>=1.7.0
-pyyaml>=6.0
-plotly>=5.13.0
-matplotlib>=3.6.0
-folium>=0.14.0
-joblib>=1.2.0
-```
+
 
 ### 4.3 External Services
 
@@ -420,60 +260,15 @@ joblib>=1.2.0
 
 ### 6.1 Development Environment
 
-```
-┌─────────────────────────────────────────────┐
-│         Developer Machine (Windows)          │
-│  ┌────────────────────────────────────────┐ │
-│  │  Python Virtual Environment            │ │
-│  │  - Flask/Streamlit app                 │ │
-│  │  - Sensor simulator                    │ │
-│  │  - ML training scripts                 │ │
-│  └────────────────────────────────────────┘ │
-│                     ↕                        │
-│  ┌────────────────────────────────────────┐ │
-│  │  Docker Container                      │ │
-│  │  - FIWARE Orion (port 1026)            │ │
-│  └────────────────────────────────────────┘ │
-└─────────────────────────────────────────────┘
-```
+
 
 ### 6.2 Production Deployment (Recommended)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Load Balancer (Nginx)                     │
-└─────────────────────────────────────────────────────────────┘
-                            │
-        ┌───────────────────┼───────────────────┐
-        ▼                   ▼                   ▼
-┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│  Dashboard    │  │  Dashboard    │  │  Dashboard    │
-│  Instance 1   │  │  Instance 2   │  │  Instance N   │
-└───────────────┘  └───────────────┘  └───────────────┘
-                            │
-                            ▼
-        ┌─────────────────────────────────────┐
-        │   FIWARE Orion Cluster              │
-        │   (with MongoDB persistence)        │
-        └─────────────────────────────────────┘
-                            │
-                            ▼
-        ┌─────────────────────────────────────┐
-        │   Sensor Simulator Cluster          │
-        │   (distributed across locations)    │
-        └─────────────────────────────────────┘
-```
+
 
 ### 6.3 Container Orchestration (Kubernetes)
 
-```yaml
-# Deployment components:
-- FIWARE Orion StatefulSet (3 replicas)
-- MongoDB StatefulSet (3 replicas)
-- Dashboard Deployment (auto-scaling)
-- Sensor Simulator DaemonSet
-- ML Training CronJob
-```
+
 
 ---
 
@@ -493,14 +288,7 @@ joblib>=1.2.0
 
 ### 7.3 Network Security
 
-```
-┌─────────────────────────────────────────┐
-│         Firewall / Security Group        │
-│  - Port 443 (HTTPS) - Public            │
-│  - Port 1026 (Orion) - Internal only    │
-│  - Port 27017 (MongoDB) - Internal only │
-└─────────────────────────────────────────┘
-```
+
 
 ---
 

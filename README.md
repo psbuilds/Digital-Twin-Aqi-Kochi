@@ -31,35 +31,7 @@ This project implements a Digital Twin system for real-time Air Quality Index mo
 
 ## 📁 Project Structure
 
-```
-Digital-Twin-Aqi-Kochi/
-├── aqi_logic/              # AQI calculation and status mapping logic
-│   ├── current_aqi_rules.py
-│   └── status_mapping.py
-├── config/                 # Configuration files
-│   └── settings.yaml
-├── dashboard/              # Web dashboard application
-│   └── app.py
-├── data/                   # Data storage and results
-│   └── evaluation_results.csv
-├── docs/                   # Project documentation
-│   ├── architecture.md
-│   ├── data_flow.md
-│   └── setup.md
-├── fiware/                 # FIWARE integration components
-│   ├── context_ingestor.py
-│   ├── entity_models.json
-│   └── orion_client.py
-├── ml/                     # Machine learning components
-│   ├── data_extraction.py
-│   ├── predict_future_aqi.py
-│   └── train_model.py
-├── sensors/                # Sensor simulation
-│   └── aqi_sensor_simulator.py
-├── LICENSE
-├── README.md
-└── requirements.txt
-```
+
 
 ---
 
@@ -101,9 +73,7 @@ Digital-Twin-Aqi-Kochi/
   - `matplotlib`/`plotly` - Data visualization
 
 **Installation:**
-```bash
-pip install -r requirements.txt
-```
+
 
 ---
 
@@ -126,28 +96,10 @@ This directory contains the core business logic for AQI calculation and interpre
 - Returns maximum sub-index as overall AQI
 
 **Calculation Formula:**
-```
-I = [(I_high - I_low) / (C_high - C_low)] × (C - C_low) + I_low
 
-Where:
-- I = AQI sub-index
-- C = Pollutant concentration
-- C_low, C_high = Concentration breakpoints
-- I_low, I_high = Index breakpoints
-```
 
 **Example Usage:**
-```python
-pollutants = {
-    'PM2.5': 45.5,
-    'PM10': 120.0,
-    'NO2': 35.2,
-    'SO2': 15.8,
-    'CO': 1.2,
-    'O3': 60.0
-}
-aqi = calculate_aqi(pollutants)
-```
+
 
 #### `status_mapping.py`
 **Purpose:** Maps numerical AQI values to categorical health status levels and recommendations.
@@ -168,15 +120,7 @@ aqi = calculate_aqi(pollutants)
 | 301+ | Hazardous | Maroon | Health warnings of emergency conditions |
 
 **Return Structure:**
-```python
-{
-    'category': 'Moderate',
-    'color': '#FFFF00',
-    'health_implications': 'Air quality is acceptable...',
-    'cautionary_statement': 'Unusually sensitive people should consider...',
-    'sensitive_groups': ['children', 'elderly', 'respiratory_patients']
-}
-```
+
 
 ---
 
@@ -190,55 +134,16 @@ Contains configuration files for system-wide settings.
 **Configuration Sections:**
 
 **1. FIWARE Settings:**
-```yaml
-fiware:
-  orion_url: "http://localhost:1026"
-  service: "aqi_kochi"
-  service_path: "/sensors"
-  entity_type: "AirQualitySensor"
-```
+
 
 **2. Sensor Configuration:**
-```yaml
-sensors:
-  update_interval: 60  # seconds
-  locations:
-    - name: "Ernakulam"
-      latitude: 9.9816
-      longitude: 76.2999
-    - name: "Fort Kochi"
-      latitude: 9.9658
-      longitude: 76.2427
-  pollutants:
-    - PM2.5
-    - PM10
-    - NO2
-    - SO2
-    - CO
-    - O3
-```
+
 
 **3. Machine Learning Parameters:**
-```yaml
-ml:
-  model_type: "RandomForest"
-  training_window: 30  # days
-  prediction_horizon: 24  # hours
-  features:
-    - temperature
-    - humidity
-    - wind_speed
-    - hour_of_day
-    - day_of_week
-```
+
 
 **4. Dashboard Settings:**
-```yaml
-dashboard:
-  port: 5000
-  refresh_rate: 30  # seconds
-  max_history: 1000  # data points
-```
+
 
 ---
 
@@ -286,24 +191,7 @@ Contains the web-based visualization interface.
 - **Maps:** Leaflet.js or Folium
 
 **Example Code Structure:**
-```python
-from flask import Flask, render_template, jsonify
-from fiware.orion_client import OrionClient
-from ml.predict_future_aqi import predict_aqi
 
-app = Flask(__name__)
-orion = OrionClient()
-
-@app.route('/')
-def index():
-    current_data = orion.get_latest_data()
-    return render_template('dashboard.html', data=current_data)
-
-@app.route('/api/predictions')
-def get_predictions():
-    predictions = predict_aqi(hours=24)
-    return jsonify(predictions)
-```
 
 ---
 
@@ -315,11 +203,7 @@ Stores data files, results, and datasets.
 **Purpose:** Contains machine learning model evaluation metrics and performance results.
 
 **Structure:**
-```csv
-timestamp,model_name,mae,rmse,r2_score,mape,training_samples,test_samples
-2024-01-15 10:30:00,RandomForest,5.23,7.45,0.89,8.5,5000,1000
-2024-01-15 11:00:00,GradientBoosting,4.87,6.92,0.91,7.8,5000,1000
-```
+
 
 **Metrics Explained:**
 - **MAE (Mean Absolute Error):** Average absolute difference between predicted and actual AQI
@@ -375,34 +259,22 @@ Contains comprehensive project documentation.
 
 **Contents:**
 1. **Data Collection:**
-   ```
-   Sensors → Simulator → JSON Format
-   ```
+   
 
 2. **Data Ingestion:**
-   ```
-   Simulator → Context Ingestor → FIWARE Orion
-   ```
+   
 
 3. **Data Processing:**
-   ```
-   FIWARE → AQI Calculator → Status Mapper
-   ```
+   
 
 4. **Data Storage:**
-   ```
-   Processed Data → CSV/Database → Historical Archive
-   ```
+   
 
 5. **Data Visualization:**
-   ```
-   FIWARE/Storage → Dashboard → User Interface
-   ```
+   
 
 6. **ML Pipeline:**
-   ```
-   Historical Data → Feature Engineering → Model Training → Predictions
-   ```
+   
 
 **Data Formats:**
 - Sensor data: JSON (NGSI-v2 format)
@@ -420,16 +292,10 @@ Contains comprehensive project documentation.
    - Git
 
 2. **FIWARE Setup:**
-   ```bash
-   docker run -d --name orion -p 1026:1026 fiware/orion
-   ```
+   
 
 3. **Project Installation:**
-   ```bash
-   git clone https://github.com/username/Digital-Twin-Aqi-Kochi.git
-   cd Digital-Twin-Aqi-Kochi
-   pip install -r requirements.txt
-   ```
+   
 
 4. **Configuration:**
    - Edit `config/settings.yaml`
@@ -437,16 +303,7 @@ Contains comprehensive project documentation.
    - Configure sensor locations
 
 5. **Running Components:**
-   ```bash
-   # Start sensor simulator
-   python sensors/aqi_sensor_simulator.py
    
-   # Start dashboard
-   python dashboard/app.py
-   
-   # Train ML model
-   python ml/train_model.py
-   ```
 
 6. **Verification:**
    - Check FIWARE entities
@@ -465,16 +322,7 @@ Handles integration with FIWARE Orion Context Broker.
 **Key Classes:**
 
 **OrionClient:**
-```python
-class OrionClient:
-    def __init__(self, url, service, service_path)
-    def create_entity(self, entity_data)
-    def update_entity(self, entity_id, attributes)
-    def get_entity(self, entity_id)
-    def query_entities(self, entity_type, filters)
-    def delete_entity(self, entity_id)
-    def subscribe(self, subscription_data)
-```
+
 
 **Key Methods:**
 
@@ -499,13 +347,7 @@ class OrionClient:
    - Manages subscription lifecycle
 
 **HTTP Headers:**
-```python
-headers = {
-    'Content-Type': 'application/json',
-    'Fiware-Service': self.service,
-    'Fiware-ServicePath': self.service_path
-}
-```
+
 
 **Error Handling:**
 - Connection errors
@@ -534,30 +376,7 @@ headers = {
    - Ensures timestamp format
 
 **Data Transformation:**
-```python
-# Input (sensor format)
-{
-    'sensor_id': 'AQI_001',
-    'location': 'Ernakulam',
-    'PM2.5': 45.5,
-    'timestamp': '2024-01-15T10:30:00Z'
-}
 
-# Output (NGSI-v2 format)
-{
-    'id': 'AQI_001',
-    'type': 'AirQualitySensor',
-    'location': {
-        'type': 'geo:json',
-        'value': {'type': 'Point', 'coordinates': [76.2999, 9.9816]}
-    },
-    'PM2_5': {
-        'type': 'Number',
-        'value': 45.5,
-        'metadata': {'timestamp': {'type': 'DateTime', 'value': '2024-01-15T10:30:00Z'}}
-    }
-}
-```
 
 **Features:**
 - Automatic retry on failure
@@ -569,68 +388,7 @@ headers = {
 **Purpose:** Defines NGSI-v2 data models for FIWARE entities.
 
 **Structure:**
-```json
-{
-  "AirQualitySensor": {
-    "type": "AirQualitySensor",
-    "description": "Air quality monitoring sensor",
-    "attributes": {
-      "location": {
-        "type": "geo:json",
-        "description": "Geographic location of sensor"
-      },
-      "PM2_5": {
-        "type": "Number",
-        "unit": "µg/m³",
-        "description": "Particulate Matter 2.5 concentration"
-      },
-      "PM10": {
-        "type": "Number",
-        "unit": "µg/m³",
-        "description": "Particulate Matter 10 concentration"
-      },
-      "NO2": {
-        "type": "Number",
-        "unit": "ppb",
-        "description": "Nitrogen Dioxide concentration"
-      },
-      "SO2": {
-        "type": "Number",
-        "unit": "ppb",
-        "description": "Sulfur Dioxide concentration"
-      },
-      "CO": {
-        "type": "Number",
-        "unit": "ppm",
-        "description": "Carbon Monoxide concentration"
-      },
-      "O3": {
-        "type": "Number",
-        "unit": "ppb",
-        "description": "Ozone concentration"
-      },
-      "temperature": {
-        "type": "Number",
-        "unit": "°C",
-        "description": "Ambient temperature"
-      },
-      "humidity": {
-        "type": "Number",
-        "unit": "%",
-        "description": "Relative humidity"
-      },
-      "aqi": {
-        "type": "Number",
-        "description": "Calculated Air Quality Index"
-      },
-      "status": {
-        "type": "Text",
-        "description": "AQI status category"
-      }
-    }
-  }
-}
-```
+
 
 **Usage:**
 - Schema validation
@@ -676,20 +434,7 @@ Contains machine learning components for AQI prediction.
    - Computes pollutant ratios
 
 **Feature Creation Examples:**
-```python
-# Time features
-df['hour'] = df['timestamp'].dt.hour
-df['day_of_week'] = df['timestamp'].dt.dayofweek
-df['is_weekend'] = df['day_of_week'].isin([5, 6])
 
-# Rolling features
-df['PM2.5_rolling_mean_3h'] = df['PM2.5'].rolling(3).mean()
-df['PM2.5_rolling_std_3h'] = df['PM2.5'].rolling(3).std()
-
-# Lag features
-df['PM2.5_lag_1h'] = df['PM2.5'].shift(1)
-df['PM2.5_lag_24h'] = df['PM2.5'].shift(24)
-```
 
 **Data Quality Checks:**
 - Range validation
@@ -703,51 +448,22 @@ df['PM2.5_lag_24h'] = df['PM2.5'].shift(24)
 **Workflow:**
 
 1. **Data Loading:**
-   ```python
-   from data_extraction import extract_from_fiware, feature_engineering
-   data = extract_from_fiware(days=30)
-   features = feature_engineering(data)
-   ```
+   
 
 2. **Train-Test Split:**
-   ```python
-   from sklearn.model_selection import train_test_split
-   X_train, X_test, y_train, y_test = train_test_split(
-       features, target, test_size=0.2, shuffle=False
-   )
-   ```
+   
 
 3. **Model Training:**
-   ```python
-   from sklearn.ensemble import RandomForestRegressor
-   model = RandomForestRegressor(n_estimators=100, max_depth=10)
-   model.fit(X_train, y_train)
-   ```
+   
 
 4. **Hyperparameter Tuning:**
-   ```python
-   from sklearn.model_selection import GridSearchCV
-   param_grid = {
-       'n_estimators': [50, 100, 200],
-       'max_depth': [5, 10, 15],
-       'min_samples_split': [2, 5, 10]
-   }
-   grid_search = GridSearchCV(model, param_grid, cv=5)
-   ```
+   
 
 5. **Model Evaluation:**
-   ```python
-   from sklearn.metrics import mean_absolute_error, r2_score
-   predictions = model.predict(X_test)
-   mae = mean_absolute_error(y_test, predictions)
-   r2 = r2_score(y_test, predictions)
-   ```
+   
 
 6. **Model Persistence:**
-   ```python
-   import joblib
-   joblib.dump(model, 'models/aqi_predictor.pkl')
-   ```
+   
 
 **Supported Models:**
 - Random Forest Regressor
@@ -768,28 +484,10 @@ df['PM2.5_lag_24h'] = df['PM2.5'].shift(24)
 **Key Functions:**
 
 1. **load_model():**
-   ```python
-   import joblib
-   model = joblib.load('models/aqi_predictor.pkl')
-   ```
+   
 
 2. **predict_aqi():**
-   ```python
-   def predict_aqi(hours=24, location='Ernakulam'):
-       # Load latest data
-       current_data = get_current_conditions()
-       
-       # Generate future timestamps
-       future_times = generate_future_timestamps(hours)
-       
-       # Create feature matrix
-       features = create_prediction_features(current_data, future_times)
-       
-       # Make predictions
-       predictions = model.predict(features)
-       
-       return predictions
-   ```
+   
 
 3. **create_prediction_features():**
    - Uses latest sensor readings
@@ -802,17 +500,7 @@ df['PM2.5_lag_24h'] = df['PM2.5'].shift(24)
    - Returns upper/lower bounds
 
 **Output Format:**
-```python
-{
-    'predictions': [
-        {'timestamp': '2024-01-15T11:00:00Z', 'aqi': 85, 'confidence': 0.92},
-        {'timestamp': '2024-01-15T12:00:00Z', 'aqi': 88, 'confidence': 0.89},
-        ...
-    ],
-    'model_version': 'v1.2.3',
-    'generated_at': '2024-01-15T10:30:00Z'
-}
-```
+
 
 **Features:**
 - Real-time prediction API
@@ -832,14 +520,7 @@ Handles sensor data simulation and collection.
 **Key Components:**
 
 1. **SensorSimulator Class:**
-   ```python
-   class SensorSimulator:
-       def __init__(self, location, config)
-       def generate_reading(self)
-       def add_noise(self, value, noise_level)
-       def simulate_pattern(self, pollutant, hour)
-       def start_simulation(self, interval)
-   ```
+   
 
 2. **Data Generation:**
    - Realistic pollutant patterns
@@ -848,17 +529,7 @@ Handles sensor data simulation and collection.
    - Random noise addition
 
 3. **Simulation Patterns:**
-   ```python
-   # Morning traffic peak (7-9 AM)
-   if 7 <= hour <= 9:
-       PM2_5 *= 1.5
-       NO2 *= 1.8
    
-   # Evening peak (5-7 PM)
-   if 17 <= hour <= 19:
-       PM2_5 *= 1.4
-       CO *= 1.6
-   ```
 
 4. **Integration:**
    - Sends data to Context Ingestor
@@ -866,20 +537,7 @@ Handles sensor data simulation and collection.
    - Multiple location support
 
 **Configuration:**
-```python
-config = {
-    'base_values': {
-        'PM2.5': 35,
-        'PM10': 80,
-        'NO2': 25,
-        'SO2': 10,
-        'CO': 0.8,
-        'O3': 45
-    },
-    'noise_level': 0.1,  # 10% random variation
-    'update_interval': 60  # seconds
-}
-```
+
 
 **Features:**
 - Realistic data patterns
@@ -897,20 +555,13 @@ config = {
 - Git
 
 ### Step 1: Clone Repository
-```bash
-git clone https://github.com/yourusername/Digital-Twin-Aqi-Kochi.git
-cd Digital-Twin-Aqi-Kochi
-```
+
 
 ### Step 2: Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+
 
 ### Step 3: Setup FIWARE Orion
-```bash
-docker run -d --name orion -p 1026:1026 fiware/orion
-```
+
 
 ### Step 4: Configure Settings
 Edit `config/settings.yaml` with your specific configuration.
@@ -920,29 +571,18 @@ Edit `config/settings.yaml` with your specific configuration.
 ## 💻 Usage
 
 ### Start Sensor Simulator
-```bash
-python sensors/aqi_sensor_simulator.py
-```
+
 
 ### Train ML Model
-```bash
-python ml/train_model.py
-```
+
 
 ### Launch Dashboard
-```bash
-python dashboard/app.py
-```
+
 
 Access dashboard at: `http://localhost:5000`
 
 ### Query FIWARE Data
-```python
-from fiware.orion_client import OrionClient
 
-client = OrionClient()
-entities = client.query_entities('AirQualitySensor')
-```
 
 ---
 
